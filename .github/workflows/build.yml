@@ -15,23 +15,25 @@ jobs:
         with:
           node-version: 20
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Add Android platform
-        run: npx cap add android
-
-      - name: Sync web files
-        run: npx cap sync android
-
-      - name: Build debug APK
-        working-directory: android
+      - name: Build APK
         run: |
+          FILE=$(find . -name package.json -not -path '*/node_modules/*' | head -n 1)
+          if [ -z "$FILE" ]; then
+            echo "KHONG TIM THAY package.json. Cac file hien co:"
+            ls -R | head -n 50
+            exit 1
+          fi
+          cd "$(dirname "$FILE")"
+          echo "Thu muc du an: $(pwd)"
+          npm install
+          npx cap add android
+          npx cap sync android
+          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -39,4 +41,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sleep-calculator-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: "**/app-debug.apk"
